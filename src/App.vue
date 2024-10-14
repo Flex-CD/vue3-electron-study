@@ -1,6 +1,6 @@
 <template>
   <div class="header">
-    <div class="item" v-for="item in content.option" :key="item.id">
+    <div class="item" v-for="item in content.option" :key="item.value">
       <el-button size="small" class="t" :type="content.active === item.value ? 'primary' : ''" @click="content.active = item.value">{{ item.title }}</el-button>
     </div>
   </div>
@@ -9,41 +9,57 @@
     <div class="option">
       <div class="title">截图快捷键</div>
       <div class="content">
-        <div class="touch">⌘ ⇧ A</div>
+        <div class="touch" v-if="$config.shot.set">
+          <span v-if="$config.shot.input.length">{{ $config.shot.input.map((i: any) => i.t).join(' ') }}</span>
+          <span v-else>请按键</span>
+        </div>
+        <div class="touch" v-else @click="$config.changeKey('shot')">{{ $config.shotT }}</div>
       </div>
     </div>
   </div>
 
   <div class="content" v-show="content.active === 'window'">
     <div class="option">
-      <div class="title">左对齐1/2</div>
+      <div class="title">窗口左半边</div>
       <div class="content">
-        <div class="touch">⌃ ⌥ ←</div>
+        <div class="touch" v-if="$config.left.set">
+          <span v-if="$config.left.input.length">{{ $config.left.input.map((i: any) => i.t).join(' ') }}</span>
+          <span v-else>请按键</span>
+        </div>
+        <div class="touch" v-else @click="$config.changeKey('left')">{{ $config.leftT }}</div>
       </div>
     </div>
     <div class="option">
-      <div class="title">右对齐1/2</div>
+      <div class="title">窗口右半边</div>
       <div class="content">
-        <div class="touch">⌃ ⌥ →</div>
+        <div class="touch" v-if="$config.right.set">
+          <span v-if="$config.right.input.length">{{ $config.right.input.map((i: any) => i.t).join(' ') }}</span>
+          <span v-else>请按键</span>
+        </div>
+        <div class="touch" v-else @click="$config.changeKey('right')">{{ $config.rightT }}</div>
       </div>
     </div>
   </div>
 
   <div class="content" v-show="content.active === 'network'">
     <div class="option">
-      <div class="title">右对齐1/2</div>
+      <div class="title">网络代理</div>
       <div class="content">
-        <el-input type="text" v-model="proxyNetwork.input" placeholder="输入代理地址" style="width: 120px" />
-        <el-button :type="proxyNetwork.active ? 'primary' : ''">{{ proxyNetwork.active ? '关闭代理' : '开启代理' }}</el-button>
+        <el-input type="text" v-model="$config.network.value" placeholder="输入代理地址" style="width: 120px" />
+        <el-button :type="$config.network.active ? 'primary' : ''" @click="$config.toggleNetworkStatus()">{{ $config.network.active ? '关闭代理' : '开启代理' }}</el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+
+import useConfigStore from '@/stores/config'
 
 type TabVal = 'shot' | 'window' | 'network'
+
+const $config = useConfigStore()
 
 const content = ref<{ active: TabVal; option: { title: string; value: TabVal }[] }>({
   active: 'shot',
@@ -54,9 +70,9 @@ const content = ref<{ active: TabVal; option: { title: string; value: TabVal }[]
   ]
 })
 
-const proxyNetwork = ref<{ input: string; active: boolean }>({
-  input: 'http://localhost:7890',
-  active: false
+onMounted(() => {
+  $config.initKey()
+  $config.getNetworkStatus()
 })
 </script>
 
@@ -71,6 +87,7 @@ body,
 }
 
 #app {
+  position: relative;
   background-color: #eee;
 
   > .header {

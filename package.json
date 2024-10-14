@@ -1,8 +1,6 @@
 {
   "name": "vue3-electron-study",
   "version": "0.0.0",
-  "private": true,
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "electron": "electron electron/main.js",

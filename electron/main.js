@@ -1,15 +1,56 @@
-import { app, BrowserWindow } from 'electron'
+/* eslint-disable @typescript-eslint/no-require-imports */
+const path = require('node:path')
+const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron')
 
-function createWindow() {
+const createWindow = () => {
   const win = new BrowserWindow({
-    width: 400,
-    height: 400,
+    width: 800,
+    height: 600,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'preload.js')
     }
   })
-  win.loadURL('http://localhost:5173/')
+
+  // win.loadFile(path.join(__dirname, '../dist/index.html'))
+  win.loadURL('http://localhost:5173')
 }
 
-app.on('ready', createWindow)
+app.whenReady().then(() => {
+  globalShortcut.unregisterAll()
+
+  createWindow()
+
+  ipcMain.handle('setkey', (event, v) => {
+    const value = JSON.parse(v)
+
+    if (value.old.length) {
+      removeKeyListener(value.old.map((i) => i.v).join('+'))
+    }
+
+    if (value.new.length) {
+      return addKeyListener(value.new.map((i) => i.v).join('+'), () => {
+        console.log(value.type)
+      })
+    }
+
+    return false
+  })
+})
+
+app.on('window-all-closed', () => {
+  globalShortcut.unregisterAll()
+})
+
+function addKeyListener(key, cb) {
+  try {
+    return globalShortcut.isRegistered(key) ? false : globalShortcut.register(key, cb)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (e) {
+    return false
+  }
+}
+function removeKeyListener(key) {
+  if (globalShortcut.isRegistered(key)) {
+    globalShortcut.unregister(key)
+  }
+}
