@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('node:path')
-const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron')
+const { app, BrowserWindow, ipcMain, globalShortcut, clipboard, nativeImage } = require('electron')
+const screenshot = require('screenshot-desktop')
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -29,7 +30,11 @@ app.whenReady().then(() => {
 
     if (value.new.length) {
       return addKeyListener(value.new.map((i) => i.v).join('+'), () => {
-        console.log(value.type)
+        if (value.type === 'shot') {
+          doScreenshot()
+        } else if (value.type === 'left' || value.type === 'right') {
+          doWinAlign(value.type)
+        }
       })
     }
 
@@ -53,4 +58,16 @@ function removeKeyListener(key) {
   if (globalShortcut.isRegistered(key)) {
     globalShortcut.unregister(key)
   }
+}
+
+// 截图 API
+async function doScreenshot() {
+  const img = await screenshot()
+  const image = nativeImage.createFromBuffer(img)
+  clipboard.writeImage(image)
+}
+
+// 设置窗口对其
+function doWinAlign(type) {
+  console.log('doWinAlign', type)
 }
